@@ -1,35 +1,52 @@
 #include <LoRa.h>
 #include <SPI.h>
 #include <DHT.h>
+#include <Adafruit_Sensor.h>
 
-#define NODE_ID 2        // Unique identifier for each node
+
+#define NODE_ID 3        // Unique identifier for each node
 #define GATEWAY_ID 0     // ID of the gateway
 #define MAX_HOP_COUNT 3  // Maximum number of hops
 #define ss 5
 #define rst 14
 #define dio0 2
 
+#define uS_TO_S_FACTOR 1000000  // Conversion factor for micro seconds to seconds
+#define TIME_TO_SLEEP 60        // Time ESP32 will go to sleep (in seconds)
 
 // Create instances of the DHT and rain sensors
 #define DHTPIN 4      // DHT22 sensor data pin is connected to GPIO 4
 #define DHTTYPE DHT22 // DHT 22 (AM2302)
 DHT dht(DHTPIN, DHTTYPE);
 
-unsigned long previousMillis = 0;  // will store last time LED was updated
+#define POWER_PIN 23  // ESP32's pin GPIO32 that provides power to the rain sensor
+#define AO_PIN 34 
+
+RTC_DATA_ATTR int bootCount = 0;
+
+
+unsigned long previousMillis = 0;
+unsigned long previousMillis1 = 0;  // will store last time LED was updated
 
 // constants won't change:
-const long interval = 5000; 
+const long interval = 2500; 
+const long interval1 = 15000; 
 
-bool nodesDiscovered[255] = { false };  // Array to track discovered nodes
-int hopCount[255] = { 0 };              // Array to track hop count for each node
+
+RTC_DATA_ATTR bool nodesDiscovered[255] = { false };  // Array to track discovered nodes
+RTC_DATA_ATTR int hopCount[255] = { 0 };              // Array to track hop count for each node
 
 void setup() {
   Serial.begin(115200);
+   ++bootCount;
+  Serial.println(bootCount);
   while (!Serial);
   Serial.println("LoRa Receiver");
 
   //setup LoRa transceiver module
   LoRa.setPins(ss, rst, dio0);
+
+  pinMode(POWER_PIN, OUTPUT);
 
   dht.begin();
   
@@ -37,28 +54,44 @@ void setup() {
   //433E6 for Asia
   //866E6 for Europe
   //915E6 for North America
-  while (!LoRa.begin(915E6)) {
-    Serial.println(".");
-    delay(500);
-  }
-   // Change sync word (0xF3) to match the receiver
-  // The sync word assures you don't get LoRa messages from other LoRa transceivers
-  // ranges from 0-0xFF
-  Serial.println("LoRa Initializing OK!");
+  // Check if ESP32 woke up from deep sleep
+  if (esp_sleep_get_wakeup_cause() != ESP_SLEEP_WAKEUP_TIMER) {
+    while (!LoRa.begin(915E6)) {
+      Serial.println(".");
+      delay(500);
+    }
 
-  broadcastPresence();
+    Serial.println("LoRa Initializing OK!");
+
+    // Node Discovery
+    broadcastPresence();
+  } else {
+    Serial.println("Woke up from deep sleep!");
+    while (!LoRa.begin(915E6)) {
+      Serial.println(".");
+      delay(500);
+    }
+
+    Serial.println("LoRa Initializing OK!");
+
+    // Node Discovery
+    broadcastPresence();
+  }
 }
 
 void loop() {
+  // Node Discover
+
   // Node Discover
   unsigned long currentMillis = millis();
 
   if (currentMillis - previousMillis >= interval) {
     // save the last time you blinked the LED
     previousMillis = currentMillis;
-
-    broadcastPresence();
-    delay(500);
+    if(bootCount == 0){
+      broadcastPresence();
+      delay(500);
+    }
     sendSensorData();
 
   }
@@ -79,8 +112,18 @@ void loop() {
     Serial.println(LoRa.packetRssi());
     processIncomingMessage(LoRaData);
   }
-  // Send Sensor Data
-  //
+  unsigned long currentMillis1 = millis();
+  if (currentMillis1 - previousMillis1 >= interval1) {
+    // save the last time you blinked the LED
+    previousMillis1 = currentMillis1;
+
+    Serial.println("Going to sleep...");
+    delay(2500); // Allow serial messages to be sent before sleeping
+
+    esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
+    esp_deep_sleep_start();
+
+  }
 }
 
 void broadcastPresence() {
@@ -97,8 +140,15 @@ void sendSensorData() {
   // Simulated sensor data
   float sensorValue = readTemperature();
 
+  digitalWrite(POWER_PIN, HIGH);  // turn the rain sensor's power ON
+  delay(10);                      // wait 10 milliseconds
+
+  int rain_value = analogRead(AO_PIN);
+
+  digitalWrite(POWER_PIN, LOW); 
+
   // Send sensor data
-  String sensorMessage = "SENSOR:" + String(NODE_ID) + ":" + String(sensorValue);
+  String sensorMessage = "SENSOR:" + String(NODE_ID) + ":" + String(sensorValue) + "C, " + String(rain_value) ;
   LoRa.beginPacket();
   LoRa.print(sensorMessage);
   LoRa.endPacket();
