@@ -2,6 +2,7 @@
 #include <SPI.h>
 #include <DHT.h>
 #include <Adafruit_Sensor.h>
+#include <TinyGPSPlus.h>
 
 
 #define NODE_ID 2        // Unique identifier for each node
@@ -33,6 +34,9 @@ unsigned long previousMillis1 = 0;  // will store last time LED was updated
 const long interval = 2500; 
 const long interval1 = 12000; 
 
+static const int RXPin = 16, TXPin = 17;
+static const uint32_t GPSBaud = 9600;
+TinyGPSPlus gps;
 
 RTC_DATA_ATTR bool nodesDiscovered[255] = { false };  // Array to track discovered nodes
 RTC_DATA_ATTR int hopCount[255] = { 0 };              // Array to track hop count for each node
@@ -40,6 +44,8 @@ RTC_DATA_ATTR int hopCount[255] = { 0 };              // Array to track hop coun
 
 void setup() {
   Serial.begin(115200);
+  Serial2.begin(9600, SERIAL_8N1, RXPin, TXPin);
+
    ++bootCount;
   Serial.println(bootCount);
   while (!Serial);
@@ -115,20 +121,15 @@ void loop() {
       processIncomingMessage(LoRaData);
     }
   }
-  unsigned long currentMillis1 = millis();
-  if (currentMillis1 - previousMillis1 >= interval1) {
-    // save the last time you blinked the LED
-    previousMillis1 = currentMillis1;
+  while (Serial2.available() > 0)
+    gps.encode(Serial2.read());
 
-    Serial.println("Going to sleep...");
-    delay(1000); // Allow serial messages to be sent before sleeping
-    digitalWrite(DONEPIN, HIGH);
-    delay(1);
-    digitalWrite(DONEPIN, LOW);
-    delay(1);
+  // Check if GPS has a fix and the minutes are at intervals of 2
+  if (gps.location.isUpdated() && gps.time.isUpdated() && (gps.time.minute() % 2 == 0) && (gps.time.second() == 30)) {
+    Serial.println("Going to sleep for x amount of time");
+    delay(1000);
     esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
     esp_deep_sleep_start();
-
   }
 }
 

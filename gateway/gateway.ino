@@ -40,35 +40,35 @@ void loop() {
 
 void processIncomingMessage(String message) {
 
-  // // Parse the incoming message
-  // String parts[3];
-  // int partIndex = 0;
-  // for (int i = 0; i < message.length(); i++) {
-  //   if (message.charAt(i) == ':') {
-  //     partIndex++;
-  //   } else {
-  //     parts[partIndex] += message.charAt(i);
-  //   }
-  // }
+  // Parse the incoming message
+  String parts[4];
+  int partIndex = 0;
+  for (int i = 0; i < message.length(); i++) {
+    if (message.charAt(i) == ':') {
+      partIndex++;
+    } else {
+      parts[partIndex] += message.charAt(i);
+    }
+  }
 
-  // int senderID = parts[1].toInt();
-  // int senderHopCount = parts[2].toInt();
+  int senderID = parts[1].toInt();
+  int senderHopCount = parts[2].toInt();
 
-  // // Check if the message is from a sensor node
-  // if (parts[0] == "HELLO" && senderID != GATEWAY_ID) {
-  //   Serial.println("Message from Node " + String(senderID) + " with hop count " + String(senderHopCount));
+  // Check if the message is from a sensor node
+  if (parts[0] == "HELLO" && senderID != GATEWAY_ID) {
+    Serial.println("Message from Node " + String(senderID) + " with hop count " + String(senderHopCount));
 
-  //   processSensorData(message);
+    processSensorData(message);
 
-  //   // Acknowledge the node
-  //   acknowledgeNode(senderID);
-  // } else if (parts[0] == "ACK" && senderID != GATEWAY_ID) {
-  //   Serial.println("Acknowledgment from Node " + String(senderID));
-  //   // Handle the acknowledgment as needed
-  // }
-  // else{
+    // Acknowledge the node
+    acknowledgeNode(senderID);
+  } else if (parts[0] == "ACK" && senderID != GATEWAY_ID) {
+    Serial.println("Acknowledgment from Node " + String(senderID));
+    // Handle the acknowledgment as needed
+  }
+  else{
     Serial.println("Received message: " + message);
-  
+  }
 }
 
 void processSensorData(String message) {
