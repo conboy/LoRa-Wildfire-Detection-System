@@ -5,6 +5,15 @@
 #define rst 14
 #define dio0 2
 
+struct Coordinates {
+  float latitude;
+  float longitude;
+};
+
+const int MAX_NODES = 255;  // Adjust the size based on your requirements
+
+RTC_DATA_ATTR bool nodesDiscovered[255] = { false };  // Array to track discovered nodes
+Coordinates nodeCoordinates[MAX_NODES];
 
 void setup() {
   Serial.begin(115200);
@@ -28,8 +37,6 @@ void loop() {
 
     while (LoRa.available()) {
       LoRaData = LoRa.readString();
-      
-      // Serial.print(LoRaData); 
     }
     // Process the incoming message
     if(LoRaData.endsWith("ID498")){
@@ -39,9 +46,8 @@ void loop() {
 }
 
 void processIncomingMessage(String message) {
-
   // Parse the incoming message
-  String parts[4];
+  String parts[8]; // tweak
   int partIndex = 0;
   for (int i = 0; i < message.length(); i++) {
     if (message.charAt(i) == ':') {
@@ -58,23 +64,49 @@ void processIncomingMessage(String message) {
   if (parts[0] == "HELLO" && senderID != GATEWAY_ID) {
     Serial.println("Message from Node " + String(senderID) + " with hop count " + String(senderHopCount));
 
-    processSensorData(message);
+    float latitiude = parts[4].toFloat();
+    float longitude = parts[6].toFloat();
+
+    nodeCoordinates[senderID].latitude = parts[4].toFloat();
+    nodeCoordinates[senderID].longitude = parts[6].toFloat();
+
+    //Next step is send to webserver to plot coordinates
+    Serial.println("Latitude: " + String(latitiude, 6) + " | Longitude: " + String(longitude, 6));
 
     // Acknowledge the node
     acknowledgeNode(senderID);
+
+    Serial.println(message);
   } else if (parts[0] == "ACK" && senderID != GATEWAY_ID) {
     Serial.println("Acknowledgment from Node " + String(senderID));
     // Handle the acknowledgment as needed
+    nodesDiscovered[senderID] = true; //ack the node and store it in the array (keep track of it)
   }
   else{
-    Serial.println("Received message: " + message);
+    // Serial.println("Received message: " + message);
+    processSensorData(message);
   }
 }
 
 void processSensorData(String message) {
   // Extract sensor data from the message and perform actions as needed
-  // Serial.println("Processing sensor data...");
-  // Serial.println("Sensor Data: " + message);
+  String parts[8]; // tweak
+  int partIndex = 0;
+  for (int i = 0; i < message.length(); i++) {
+    if (message.charAt(i) == ':') {
+      partIndex++;
+    } else {
+      parts[partIndex] += message.charAt(i);
+    }
+  }
+
+  float temp = parts[2].toFloat();
+  float humidity = parts[3].toFloat();
+  float rainValue = parts[4].toFloat();
+
+  //Send to webserver to be displayed on GUI 
+  Serial.println("Temperature: " + String(temp, 2) + " | Humidity: " + String(humidity, 2) + " | Rain Value: " + String(rainValue, 2));
+
 }
 
 void acknowledgeNode(int nodeID) {
@@ -82,7 +114,7 @@ void acknowledgeNode(int nodeID) {
   // Send an acknowledgment message to the node
   String ackMessage = "ACK:" + String(nodeID) + " ID498";
   Serial.println(ackMessage);
-  delay(1000);  // Increase the delay after sending ACK
+  delay(1000); 
   LoRa_sendMessage(ackMessage);
 }
 

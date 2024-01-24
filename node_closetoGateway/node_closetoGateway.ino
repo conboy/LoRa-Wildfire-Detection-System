@@ -19,7 +19,7 @@
 #define DHTTYPE DHT22 // DHT 22 (AM2302)
 DHT dht(DHTPIN, DHTTYPE);
 
-#define POWER_PIN 23  // ESP32's pin GPIO32 that provides power to the rain sensor
+#define POWER_PIN 22  // ESP32's pin GPIO32 that provides power to the rain sensor
 #define AO_PIN 34 // Pin to read rain sensor value
 
 RTC_DATA_ATTR int bootCount = 0; // boot count, stored in RTC data that is not cleared on deep sleep wakeup/reset
@@ -131,7 +131,6 @@ void loop() {
   /*
   *END GPS SECTION
   */
-
 }
 
 ///This code will poll here until the GPS aquires a fix, once it does, it will send the broadcast message
@@ -154,11 +153,11 @@ void broadcastPresence() {
     Serial.print("Longitude: ");
     Serial.println(gps.location.lng(), 6);
 
-    // Create the message with GPS coordinates
+    // Create the message with GPS coordinatesit 
     String message = "HELLO:" + String(NODE_ID) + ":" + String(hopCount[NODE_ID]) +
-                     ":Latitude=" + String(gps.location.lat(), 6) +
-                     ":Longitude=" + String(gps.location.lng(), 6) +
-                     ":SensorDataHereID498";
+                     ":Latitude:" + String(gps.location.lat(), 6) +
+                     ":Longitude:" + String(gps.location.lng(), 6) +
+                     ":ID498";
 
     // Send the message using LoRa
     LoRa_sendMessage(message);
