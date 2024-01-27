@@ -12,7 +12,7 @@
 #define dio0 2
 
 #define uS_TO_S_FACTOR 60000000  // Conversion factor for micro seconds to minutes
-#define TIME_TO_SLEEP 5     // Time ESP32 will go to sleep (in minuntes)
+#define TIME_TO_SLEEP 1     // Time ESP32 will go to sleep (in minuntes)
 
 // Create instances of the DHT and rain sensors
 #define DHTPIN 4      // DHT22 sensor data pin is connected to GPIO 4
@@ -131,6 +131,7 @@ void loop() {
   /*
   *END GPS SECTION
   */
+
 }
 
 ///This code will poll here until the GPS aquires a fix, once it does, it will send the broadcast message
@@ -153,11 +154,11 @@ void broadcastPresence() {
     Serial.print("Longitude: ");
     Serial.println(gps.location.lng(), 6);
 
-    // Create the message with GPS coordinatesit 
+    // Create the message with GPS coordinates
     String message = "HELLO:" + String(NODE_ID) + ":" + String(hopCount[NODE_ID]) +
-                     ":Latitude:" + String(gps.location.lat(), 6) +
-                     ":Longitude:" + String(gps.location.lng(), 6) +
-                     ":ID498";
+                     ":Latitude=" + String(gps.location.lat(), 6) +
+                     ":Longitude=" + String(gps.location.lng(), 6) +
+                     ":SensorDataHereID498";
 
     // Send the message using LoRa
     LoRa_sendMessage(message);
