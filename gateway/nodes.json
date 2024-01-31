@@ -1,0 +1,19 @@
+{
+    "nodes": [
+        {
+            "nodeId": "1",
+            "temperature": "25.0",
+            "gpsCoordinates": "41.40338, 2.17403"
+        },
+        {
+            "nodeId": "2",
+            "temperature": "28.5",
+            "gpsCoordinates": "40.7128, -74.0060"
+        },
+        {
+            "nodeId": "3",
+            "temperature": "22.3",
+            "gpsCoordinates": "51.5074, -0.1278"
+        }
+    ]
+}
