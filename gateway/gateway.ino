@@ -1,24 +1,25 @@
 #include <LoRa.h>
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
-#include <WebSocketsServer.h>
 
-const char *ssid = "aquarium 22/23";
-const char *password = "ComeOnNow69420";
+// const char *ssid = "aquarium 22/23";
+const char *ssid = "QHDTESPhotspot";
+const char *password = "qhdt1234";
+// const char *password = "ComeOnNow69420";
 const char *mapboxApiKey = "pk.eyJ1IjoiMTlsZzI2IiwiYSI6ImNscnM3dGoyejAzeHIyc3RneGhpN2Z0bmUifQ.KY8X1N559UeOWP-yQeQ_YA";
 
 AsyncWebServer server(80);
 
+//Make a new struct to accomodate all of the data that is sent to the gateway
 struct Coordinates {
   float latitude;
   float longitude;
 };
 
-const int MAX_NODES = 50;  // Maximum number of nodes
+const int MAX_NODES = 255;  // Maximum number of nodes
 Coordinates nodeCoordinates[MAX_NODES];
-bool nodesDiscovered[255] = { false };
+bool nodesDiscovered[MAX_NODES] = { false };
 bool newCoordinatesReceived = true;
-
 
 void setup() {
   Serial.begin(115200);
@@ -117,7 +118,6 @@ void setup() {
 }
 
 void loop() {
-
   int packetSize = LoRa.parsePacket();
   String LoRaData = "";
   if (packetSize) {
@@ -160,7 +160,8 @@ void processIncomingMessage(String message) {
   } else if (parts[0] == "ACK" && senderID != 0) {
     Serial.println("Acknowledgment from Node " + String(senderID));
     nodesDiscovered[senderID] = true;
-  } else {
+  } else if (nodesDiscovered[senderID] != false) {
+    //We only want to process acknowledged nodes
     processSensorData(message);
   }
 }
@@ -187,6 +188,7 @@ void acknowledgeNode(int nodeID) {
   Serial.println("Acknowledging Node " + String(nodeID));
   String ackMessage = "ACK:" + String(nodeID) + " ID498";
   Serial.println(ackMessage);
+  nodesDiscovered[nodeID] = true;
   delay(1000);
   LoRa_sendMessage(ackMessage);
 }

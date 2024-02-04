@@ -40,6 +40,7 @@ RTC_DATA_ATTR int hopCount[255] = { 0 };              // Array to track hop coun
 
 void setup() {
   Serial.begin(115200);
+
   //Serial 2 for GPS Serial Port
   Serial2.begin(9600, SERIAL_8N1, RXPin, TXPin);
 
@@ -96,9 +97,8 @@ void loop() {
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
     //Only broadcast the presence if the boot count is 0, or if not acked ()
-    if(bootCount == 0){
+    if(bootCount == 0 || nodesDiscovered[NODE_ID] == false){
       broadcastPresence();
-      delay(500);
     }
     sendSensorData();
 
@@ -121,7 +121,8 @@ void loop() {
   while (Serial2.available() > 0)
     gps.encode(Serial2.read());
 
-  // Check if GPS has a fix and the minutes are at intervals of 2
+  // Check if GPS has a fix and the minutes are at intervals of 2 
+  // only go to sleep if the gps has a fix
   if (gps.location.isUpdated() && gps.time.isUpdated() && (gps.time.minute() % 2 == 0) && (gps.time.second() == 30)) {
     Serial.println("Going to sleep for x amount of time");
     delay(1000);
@@ -158,7 +159,7 @@ void broadcastPresence() {
     String message = "HELLO:" + String(NODE_ID) + ":" + String(hopCount[NODE_ID]) +
                      ":Latitude=" + String(gps.location.lat(), 6) +
                      ":Longitude=" + String(gps.location.lng(), 6) +
-                     ":SensorDataHereID498";
+                     ":ID498";
 
     // Send the message using LoRa
     LoRa_sendMessage(message);
