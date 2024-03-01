@@ -41,3 +41,8 @@ API endpoint was set up. Able to send POST requests from ESP32 gateway node and 
 
 ![API Logs on 2/4/2024](images/api_logs_feb4_2024.png)
 
+### 3/1/2024
+
+Added a [Supabase database](https://supabase.com/) to the web application architecture. For now, it stores this information of each node: Temperature, Last update, and Location. The logic for the nodes POST API endpoint was made so the gateway can send a POST request to the API endpoint and it will upsert the data to the database. The web app requests the information of all the nodes in the database every 10 seconds and updates the map accordingly. 
+
+![Web App Architecture on 3/1/2024](images\webapp_mar4_2024.gif)
