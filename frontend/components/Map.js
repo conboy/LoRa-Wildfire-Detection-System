@@ -4,7 +4,9 @@ import 'leaflet/dist/leaflet.css'
 
 const Map = () => {
 
-  const [nodes, setNodes] = useState([]);
+  const [nodes, setNodes] = useState([{id: 1, temperature: 20, gpsCoordinates: [44.230687, -76.481323]}, {id: 2, temperature: 31, gpsCoordinates: [44.2292189195705, -76.49426302982012]}]);
+  const nodeRadius = 200;
+  const fireTemperature = 30;
 
   return (
     <MapContainer center={[44.230687, -76.481323]} zoom={13} scrollWheelZoom={true} style={{height: "100%", width: "100%"}}>
@@ -12,12 +14,15 @@ const Map = () => {
         attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <Marker position={[44.230687, -76.481323]}>
-        <Popup>
-          A pretty CSS3 popup. <br /> Easily customizable.
-        </Popup>
-      </Marker>
-      <Circle center={[44.230687, -76.481323]} radius={200} />
+      {nodes.map(node => (
+        <Circle center={node.gpsCoordinates} radius={nodeRadius} pathOptions={node.temperature > fireTemperature ? { color: 'red' } : {}}>
+          <Popup>
+            <p>Node ID: {node.id}</p>
+            <p>Temperature: {node.temperature} °C</p>
+            <p>Location: {node.gpsCoordinates[0]}, {node.gpsCoordinates[1]}</p>
+          </Popup>
+        </Circle>
+      ))}
     </MapContainer>
   )
 }
