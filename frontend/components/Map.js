@@ -15,7 +15,7 @@ const Map = () => {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       {nodes.map(node => (
-        <Circle center={node.gpsCoordinates} radius={nodeRadius} pathOptions={node.temperature > fireTemperature ? { color: 'red' } : {}}>
+        <Circle key={node.id} center={node.gpsCoordinates} radius={nodeRadius} pathOptions={node.temperature > fireTemperature ? { color: 'red' } : {}}>
           <Popup>
             <p>Node ID: {node.id}</p>
             <p>Temperature: {node.temperature} °C</p>
