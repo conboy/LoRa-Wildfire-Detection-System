@@ -11,10 +11,13 @@ export default function Home() {
   )
 
   return (
-    <main>
-      
-      <Navbar />
-      <Map />
-    </main>
+    <main className="flex flex-col h-screen">
+      <div className="flex-shrink-0">
+        <Navbar />
+      </div>
+      <div className="flex-grow">
+        <Map />
+      </div>
+  </main>
   );
 }
