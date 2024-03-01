@@ -28,7 +28,17 @@ export default function Map() {
     const intervalId = setInterval(fetchData, 10000); // Then every 10 seconds
 
     return () => clearInterval(intervalId); // Cleanup on component unmount
-  }, []); // Empty dependency array means this effect runs once on mount
+  }, []);
+
+  // Function to convert and format the timestamp
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp); // Convert the ISO string to a Date object
+    return date.toLocaleString("en-US", {
+      timeZone: "America/New_York", // Handles EST/EDT automatically
+      year: 'numeric', month: 'numeric', day: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+  };
 
   return (
     <MapContainer center={[44.230687, -76.481323]} zoom={13} scrollWheelZoom={true} style={{height: "100%", width: "100%"}}>
@@ -37,10 +47,11 @@ export default function Map() {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       {nodes.map(node => (
-        <Circle key={node.id} center={JSON.parse(node.gpsCoordinates)} radius={nodeRadius} pathOptions={node.temperature > fireTemperature ? { color: 'red' } : {}}>
+        <Circle key={node.id} center={JSON.parse(node.gpsCoordinates)} radius={nodeRadius} pathOptions={node.temperature > fireTemperature ? { color: 'red' } : { color: 'CornflowerBlue' }}>
           <Popup>
             <p>Node ID: {node.id}</p>
             <p>Temperature: {node.temperature} °C</p>
+            <p>Last Update: {formatTimestamp(node.timestamp)}</p>
             <p>Location: {JSON.parse(node.gpsCoordinates)[0]}, {JSON.parse(node.gpsCoordinates)[1]}</p>
           </Popup>
         </Circle>
