@@ -51,6 +51,7 @@ export default function Map() {
           <Popup>
             <p>Node ID: {node.id}</p>
             <p>Temperature: {node.temperature} °C</p>
+            <p>Humidity: {node.humidity}%</p>
             <p>Last Update: {formatTimestamp(node.timestamp)}</p>
             <p>Location: {JSON.parse(node.gpsCoordinates)[0]}, {JSON.parse(node.gpsCoordinates)[1]}</p>
           </Popup>
